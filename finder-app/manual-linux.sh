@@ -9,16 +9,16 @@ OUTDIR=/tmp/aeld
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
-FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
+FINDER_APP_DIR=/home/user/assignments-3-and-later-Nues0913/finder-app/
 CROSS_COMPILE=aarch64-none-linux-gnu-
 
 if [ $# -lt 1 ]
 then
-    echo "Using default directory ${OUTDIR} for output"
+	echo "Using default directory ${OUTDIR} for output"
 else
-    OUTDIR=$1
-    echo "Using passed directory ${OUTDIR} for output"
+	OUTDIR=$1
+	echo "Using passed directory ${OUTDIR} for output"
 fi
 
 mkdir -p ${OUTDIR}
@@ -26,8 +26,8 @@ mkdir -p ${OUTDIR}
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/linux-stable" ]; then
     #Clone only if the repository does not exist.
-    echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
-    git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
+	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
+	git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
 fi
 if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     cd linux-stable
@@ -36,28 +36,32 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
 
     # TODO: Add your kernel build steps here
 
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
-    make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
+    make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- mrproper
+
+    make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig
+
+    make -j4 ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- all
+
+    make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- modules
+
+    make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- dtbs
 fi
 
 echo "Adding the Image in outdir"
-cp "${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image" "${OUTDIR}/"
+cp ${OUTDIR}/linux-stable/arch/arm64/boot/Image $OUTDIR
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
 if [ -d "${OUTDIR}/rootfs" ]
 then
-    echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
+	echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
 # TODO: Create necessary base directories
 mkdir -p "${OUTDIR}/rootfs"
 cd "${OUTDIR}/rootfs"
-mkdir bin dev etc home lib lib64 proc sbin sys tmp usr var
+mkdir -p bin dev etc home lib lib64 proc sbin sys tmp usr var
 mkdir -p usr/bin usr/sbin usr/lib
 mkdir -p var/log
 
@@ -75,70 +79,47 @@ else
 fi
 
 # TODO: Make and install busybox
-echo "Configuring and building BusyBox..."
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-make CONFIG_PREFIX="${OUTDIR}/rootfs" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
+make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
-cd "${OUTDIR}/rootfs"
+cd ${OUTDIR}/rootfs
+
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
+sudo chmod +s ${OUTDIR}/rootfs/bin/busybox
 
 # TODO: Add library dependencies to rootfs
-# SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
-# if [ -z "$SYSROOT" ]; then
-#     SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu"
-# fi
-# SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc"
-cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 lib || true
-cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 lib64 || true
-cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 lib64 || true
-cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 lib64 || true
+TOOLCHAIN_DIR=/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu
+cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 lib
+cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libm.so.6 lib64
+cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 lib64
+cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libc.so.6 lib64
 
 # TODO: Make device nodes
-cd ${OUTDIR}/rootfs
-sudo mknod -m 666 dev/null c 1 3 || true
-sudo mknod -m 600 dev/console c 5 1 || true
+sudo mknod -m 666 dev/null c 1 3
+sudo mknod -m 666 dev/console c 1 5
 
 # TODO: Clean and build the writer utility
-echo "Building writer utility"
-cd "${FINDER_APP_DIR}"
-make clean
+cd $FINDER_APP_DIR
+make clean || echo "Warning: 'make clean' failed, continuing..."
 make CROSS_COMPILE=${CROSS_COMPILE}
-
-echo "Copying writer binary to rootfs /home"
-cp writer "${OUTDIR}/rootfs/home/"
+cd ${OUTDIR}/rootfs
 
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
-echo "Copying finder scripts and config files to /home on target rootfs"
-cp finder.sh       "${OUTDIR}/rootfs/home/"
-cp finder-test.sh  "${OUTDIR}/rootfs/home/"
+cp ${FINDER_APP_DIR}/finder.sh home
+cp ${FINDER_APP_DIR}/finder-test.sh home
+cp ${FINDER_APP_DIR}/writer home
+mkdir home/conf
+cp ${FINDER_APP_DIR}/conf/assignment.txt home/conf 
+cp ${FINDER_APP_DIR}/conf/username.txt home/conf 
+cp ${FINDER_APP_DIR}/autorun-qemu.sh home
 
-mkdir -p "${OUTDIR}/rootfs/home/conf"
-cp conf/username.txt    "${OUTDIR}/rootfs/home/conf/"
-cp conf/assignment.txt  "${OUTDIR}/rootfs/home/conf/"
-
-# copy  autorun-qemu.sh  into  outdir/rootfs/home
-cp autorun-qemu.sh "${OUTDIR}/rootfs/home/"
-
-sed -i 's|\.\./conf/assignment.txt|conf/assignment.txt|g' "${OUTDIR}/rootfs/home/finder-test.sh"
-
-sed -i '1s|/bin/bash|/bin/sh|' "${OUTDIR}/rootfs/home/finder.sh"
-sed -i '1s|/bin/bash|/bin/sh|' "${OUTDIR}/rootfs/home/finder-test.sh"
-sed -i '/make clean/ s/^/# /' "${OUTDIR}/rootfs/home/finder-test.sh"
 
 # TODO: Chown the root directory
-echo "Chowning the root directory to root:root"
-cd "${OUTDIR}/rootfs"
-sudo chown -R root:root .
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio 
 
 # TODO: Create initramfs.cpio.gz
-echo "Creating initramfs.cpio.gz"
-find . | cpio -H newc -ov --owner root:root > "${OUTDIR}/initramfs.cpio"
-cd "${OUTDIR}"
+cd $OUTDIR
 gzip -f initramfs.cpio
-
-echo "All steps completed!"
-echo "Kernel Image: ${OUTDIR}/Image"
-echo "Initramfs:    ${OUTDIR}/initramfs.cpio.gz"

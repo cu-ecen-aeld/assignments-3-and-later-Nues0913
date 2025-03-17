@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ $# -ne 2 ]; then
     echo "missing parameters."
@@ -13,7 +13,7 @@ if [ ! -d "$filesdir" ]; then
     exit 1
 fi
 
-filesNum=$(find "$filesdir" -type f | wc -l)
-linesNum=$(grep -r "$searchstr" "$filesdir" 2>/dev/null | wc -l)
-echo "The number of files are $filesNum and the number of matching lines are $linesNum"
+total_files=$(find $filesdir -type f -print | wc -l)
+found_files=$(find $filesdir -type f -print | xargs grep -l "$searchstr" | wc -l)
 
+echo "The number of files are $total_files and the number of matching lines are $found_files"
