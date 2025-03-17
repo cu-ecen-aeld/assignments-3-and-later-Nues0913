@@ -85,15 +85,15 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
+# SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
 # if [ -z "$SYSROOT" ]; then
 #     SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu"
 # fi
-SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc"
-cp ${SYSROOT}/lib/ld-linux-aarch64.so.1 lib || true
-cp ${SYSROOT}/lib64/libm.so.6 lib64 || true
-cp ${SYSROOT}/lib64/libresolv.so.2 lib64 || true
-cp ${SYSROOT}/lib64/libc.so.6 lib64 || true
+# SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc"
+cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 lib || true
+cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 lib64 || true
+cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 lib64 || true
+cp /usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 lib64 || true
 
 # TODO: Make device nodes
 cd ${OUTDIR}/rootfs
