@@ -11,7 +11,7 @@ KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
-CROSS_COMPILE=aarch64-linux-gnu-
+CROSS_COMPILE=aarch64-none-linux-gnu-
 
 if [ $# -lt 1 ]
 then
@@ -34,10 +34,13 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
 
+    # TODO: Add your kernel build steps here
+
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
-    make -j$(nproc) ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} Image
-    # make -j$(nproc) ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
+    make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
 fi
 
 echo "Adding the Image in outdir"
@@ -51,11 +54,11 @@ then
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
-echo "Creating directory for the root filesystem"
+# TODO: Create necessary base directories
 mkdir -p "${OUTDIR}/rootfs"
 cd "${OUTDIR}/rootfs"
 mkdir bin dev etc home lib lib64 proc sbin sys tmp usr var
-mkdir -p usr/bin usr/sbin
+mkdir -p usr/bin usr/sbin usr/lib
 mkdir -p var/log
 
 cd "$OUTDIR"
@@ -64,16 +67,16 @@ then
 git clone git://busybox.net/busybox.git
     cd busybox
     git checkout ${BUSYBOX_VERSION}
-    # make distclean
-    # make defconfig
+    # TODO:  Configure busybox
+    make distclean
+    make defconfig
 else
     cd busybox
 fi
 
+# TODO: Make and install busybox
 echo "Configuring and building BusyBox..."
-make distclean
-make defconfig
-make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} -j$(nproc)
+make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make CONFIG_PREFIX="${OUTDIR}/rootfs" ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
 cd "${OUTDIR}/rootfs"
@@ -82,24 +85,18 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-# SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
+SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
 # if [ -z "$SYSROOT" ]; then
-#     SYSROOT="/usr/aarch64-none-linux-gnu/libc"
+#     SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu"
 # fi
-SYSROOT="/usr/aarch64-linux-gnu"
-sudo cp -a "$SYSROOT/lib/ld-linux-aarch64.so.1" "${OUTDIR}/rootfs/lib/" || true
-sudo cp -a "$SYSROOT/lib/libm.so.6" "${OUTDIR}/rootfs/lib/" || true
-sudo cp -a "$SYSROOT/lib/libc.so.6" "${OUTDIR}/rootfs/lib/" || true
-sudo cp -a "$SYSROOT/lib/libresolv.so.2" "${OUTDIR}/rootfs/lib/" || true
-
-# make
-
-
-
+SYSROOT="/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc"
+cp ${SYSROOT}/lib/ld-linux-aarch64.so.1 lib || true
+cp ${SYSROOT}/lib64/libm.so.6 lib64 || true
+cp ${SYSROOT}/lib64/libresolv.so.2 lib64 || true
+cp ${SYSROOT}/lib64/libc.so.6 lib64 || true
 
 # TODO: Make device nodes
-echo "Creating device nodes"
-cd "${OUTDIR}/rootfs"
+cd ${OUTDIR}/rootfs
 sudo mknod -m 666 dev/null c 1 3 || true
 sudo mknod -m 600 dev/console c 5 1 || true
 
