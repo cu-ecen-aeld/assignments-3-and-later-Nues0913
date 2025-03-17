@@ -11,7 +11,7 @@ KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
-CROSS_COMPILE=aarch64-none-linux-gnu-
+CROSS_COMPILE=aarch64-linux-gnu-
 
 if [ $# -lt 1 ]
 then
@@ -82,28 +82,19 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
-if [ -z "$SYSROOT" ]; then
-    SYSROOT="/usr/aarch64-none-linux-gnu/libc"
-fi
-# SYSROOT="/usr/aarch64-none-linux-gnu/libc"
+# SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
+# if [ -z "$SYSROOT" ]; then
+#     SYSROOT="/usr/aarch64-none-linux-gnu/libc"
+# fi
+SYSROOT="/usr/aarch64-linux-gnu"
 sudo cp -a "$SYSROOT/lib/ld-linux-aarch64.so.1" "${OUTDIR}/rootfs/lib/" || true
-sudo cp -a "$SYSROOT/lib64/libm.so.6" "${OUTDIR}/rootfs/lib64/" || true
-sudo cp -a "$SYSROOT/lib64/libc.so.6" "${OUTDIR}/rootfs/lib64/" || true
-sudo cp -a "$SYSROOT/lib64/libresolv.so.2" "${OUTDIR}/rootfs/lib64/" || true
+sudo cp -a "$SYSROOT/lib/libm.so.6" "${OUTDIR}/rootfs/lib/" || true
+sudo cp -a "$SYSROOT/lib/libc.so.6" "${OUTDIR}/rootfs/lib/" || true
+sudo cp -a "$SYSROOT/lib/libresolv.so.2" "${OUTDIR}/rootfs/lib/" || true
+
 # make
-# sudo mkdir -p ${OUTDIR}/rootfs/usr/bin
-# sudo cp -a $(which make) ${OUTDIR}/rootfs/usr/bin/
-# sudo cp -a $(which vim) ${OUTDIR}/rootfs/usr/bin/
 
-# echo "Copying shared libraries..."
-# for lib in $(ldd $(which make) | awk '{print $3}' | grep -v '^$'); do
-#     sudo cp -a "$lib" "${OUTDIR}/rootfs/lib64/" || sudo cp -a "$lib" "${OUTDIR}/rootfs/lib/"
-# done
 
-# for lib in $(ldd $(which vim) | awk '{print $3}' | grep -v '^$'); do
-#     sudo cp -a "$lib" "${OUTDIR}/rootfs/lib64/" || sudo cp -a "$lib" "${OUTDIR}/rootfs/lib/"
-# done
 
 
 # TODO: Make device nodes
@@ -138,6 +129,7 @@ sed -i 's|\.\./conf/assignment.txt|conf/assignment.txt|g' "${OUTDIR}/rootfs/home
 
 sed -i '1s|/bin/bash|/bin/sh|' "${OUTDIR}/rootfs/home/finder.sh"
 sed -i '1s|/bin/bash|/bin/sh|' "${OUTDIR}/rootfs/home/finder-test.sh"
+sed -i '/make clean/ s/^/# /' "${OUTDIR}/rootfs/home/finder-test.sh"
 
 # TODO: Chown the root directory
 echo "Chowning the root directory to root:root"
