@@ -10,7 +10,8 @@ KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.gi
 KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
 ARCH=arm64
-FINDER_APP_DIR=/home/user/assignments-3-and-later-Nues0913/finder-app/
+# FINDER_APP_DIR=/home/user/assignments-3-and-later-Nues0913/finder-app/
+FINDER_APP_DIR=$(realpath $(dirname $0))
 CROSS_COMPILE=aarch64-none-linux-gnu-
 
 if [ $# -lt 1 ]
@@ -90,11 +91,12 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 sudo chmod +s ${OUTDIR}/rootfs/bin/busybox
 
 # TODO: Add library dependencies to rootfs
-TOOLCHAIN_DIR=/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu
-cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 lib
-cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libm.so.6 lib64
-cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 lib64
-cp ${TOOLCHAIN_DIR}/aarch64-none-linux-gnu/libc/lib64/libc.so.6 lib64
+# SYSROOT=/usr/local/arm-cross-compiler/install/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu
+SYSROOT=$(realpath $(aarch64-none-linux-gnu-gcc --print-sysroot))
+cp ${SYSROOT}/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib
+cp ${SYSROOT}/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64
+cp ${SYSROOT}/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64
+cp ${SYSROOT}/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64
 
 # TODO: Make device nodes
 sudo mknod -m 666 dev/null c 1 3

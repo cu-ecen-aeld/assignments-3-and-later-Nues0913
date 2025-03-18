@@ -1,13 +1,14 @@
-CC = gcc
-CROSS_COMPILE ?=
+SRC := writer.c
 TARGET = writer
-SRC = writer.c
-OBJ = $(SRC:.c=.o)
+CC = gcc
 
-all: $(TARGET)
+ifeq ($(CROSS_COMPILE), aarch64-none-linux-gnu-)
+CC = aarch64-none-linux-gnu-gcc
+endif
 
-$(TARGET): $(SRC)
-	$(CROSS_COMPILE)$(CC) -o $@ $^
+all:
+	$(CC) -g -Wall $(SRC) -o $(TARGET)
+	@echo "Compiled with $(CC)"
 
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -f *.o $(TARGET) *.elf *.map
