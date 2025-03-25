@@ -23,7 +23,7 @@ void* threadfunc(void* thread_param)
         ERROR_LOG("Failed to lock");
         return thread_param;
     }
-    // try again
+
     usleep(thread_func_args->wait_to_release_ms * 1000);
     // unlock
     if (pthread_mutex_unlock(thread_func_args->mutex) != 0) {
