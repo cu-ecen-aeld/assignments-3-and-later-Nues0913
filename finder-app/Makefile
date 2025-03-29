@@ -12,3 +12,5 @@ all:
 
 clean:
 	rm -f *.o $(TARGET) *.elf *.map
+
+.PHONY: all clean
